@@ -7,7 +7,6 @@ import {
 import { PrismaService } from "prisma/prisma.service"
 import { CreateShortenedUrlDto } from "./dtos/create-shortened-url.dto"
 import { UpdateShortenedUrlDto } from "./dtos/update-shortened-url.dto"
-import * as nanoid from "nanoid"
 import { ConfigService } from "@nestjs/config"
 import { GetShortenedUrlsQueryDto } from "./dtos/get-shortened-urls.dto"
 import { generateRandomCode } from "src/utils"
@@ -23,7 +22,7 @@ export class ShortenedUrlsService {
 	) {}
 
 	async get(userId: number, queryDto: GetShortenedUrlsQueryDto) {
-		const { page = 1, limit = 15, byCreatedAt = "asc", query = "" } = queryDto
+		const { page = 1, limit = 15, byCreatedAt = "desc", query = "" } = queryDto
 
 		const skip = (page - 1) * limit
 
@@ -48,7 +47,6 @@ export class ShortenedUrlsService {
 				clicks: ++shortenedUrl.clicks
 			}
 		})
-
 		res.redirect(shortenedUrl.origin)
 	}
 
@@ -57,10 +55,16 @@ export class ShortenedUrlsService {
 
 		const url = this.configService.getOrThrow("NODE_HOST") + "/" + code
 
+		const origin =
+			dto.origin.startsWith("http://") || dto.origin.startsWith("https://")
+				? dto.origin
+				: `https://${dto.origin}`
+
 		try {
 			return await this.prisma.shortenedUrl.create({
 				data: {
 					...dto,
+					origin,
 					userId,
 					url,
 					code
@@ -73,8 +77,6 @@ export class ShortenedUrlsService {
 	}
 
 	async updateOne(id: number, dto: UpdateShortenedUrlDto, userId: number) {
-		console.log(id)
-
 		await this.getOneOrThrow({ id })
 
 		try {
@@ -112,8 +114,6 @@ export class ShortenedUrlsService {
 	// Helers
 	async getOneOrThrow(dto: GetShortenedUrlDto): Promise<ShortenedUrl> {
 		const { id, code } = dto
-
-		console.log(id, code)
 
 		if (!id && !code) {
 			throw new BadRequestException("No id or code were provided")
