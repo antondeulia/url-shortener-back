@@ -29,7 +29,9 @@ export class AuthService {
 		const tokens = this.generateTokens(userId)
 
 		this.setCookies(res, tokens.refreshToken)
-		return tokens.accessToken
+		return {
+			accessToken: tokens.accessToken
+		}
 	}
 
 	async validate(email: string, password: string) {
