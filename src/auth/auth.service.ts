@@ -22,7 +22,9 @@ export class AuthService {
 		const tokens = this.generateTokens(user.id)
 
 		this.setCookies(res, tokens.refreshToken)
-		return tokens.accessToken
+		return {
+			accessToken: tokens.accessToken
+		}
 	}
 
 	async signIn(userId: number, res: Response) {
